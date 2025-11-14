@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/Y9pxcgTv/images-removebg-preview.png">
+    <title>Introlligent - Monitoring Dashboard</title>
+
+    <script>
+        (function() {
+            try {
+                const theme = localStorage.getItem('theme') || 'light-theme';
+                document.documentElement.classList.add(theme);
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body class="p-4 md:p-8">
+    <header class="flex justify-between items-center py-4 md:py-8 px-4">
+        <a href="/"
+class="flex items-center space-x-2 text-xl font-bold text-white bg-black p-3 rounded-lg hover:opacity-90 transition">
+        <img src="https://i.postimg.cc/Dwrs20rL/introlligent-logo.png" alt="Introlligent Logo" class="h-12">
+        </a>
+        
+        <div class="flex items-center space-x-4">
+            <a href="/" class="btn-secondary flex items-center gap-2">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="/logout" class="btn-secondary flex items-center gap-2">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+            <div class="theme-toggle flex items-center">
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" value="" class="sr-only peer" onchange="toggleTheme(this)">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 dark:peer-focus:ring-orange-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-orange-500"></div>
+                    <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+                    <i class="fas fa-moon"></i>
+                    </span>
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto py-8">
+        <h1 class="text-4xl font-extrabold text-primary-orange mb-8">
+            <i class="fas fa-tachometer-alt mr-3"></i> Recruitment Monitoring Dashboard
+        </h1>
+
+        <div id="kpi-cards" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-card p-6 rounded-xl shadow-lg">
+                <h2 class="text-xl font-bold text-heading mb-4">Project Resume Distribution</h2>
+                <div id="projectDistributionTableContainer" class="overflow-x-auto">
+                    <table id="projectDistributionTable" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead>
+                            <tr class="text-left text-xs font-semibold uppercase tracking-wider text-muted">
+                                <th class="px-6 py-3">Project Title</th>
+                                <th class="px-6 py-3 text-right">Total Resumes</th>
+                                <th class="px-6 py-3 text-right">Top Candidates Kept</th>
+                            </tr>
+                        </thead>
+                        <tbody id="project-stats-body">
+                            <tr><td colspan="3" class="text-center py-4 text-muted">Loading project data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="bg-card p-6 rounded-xl shadow-lg">
+                <h2 class="text-xl font-bold text-heading mb-4">Recruiter Activity Summary</h2>
+                <div class="text-center text-muted py-8">
+                    <i class="fas fa-chart-pie text-4xl mb-3"></i>
+                    <p class="text-sm">Activity chart currently disabled.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-12 bg-card p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-bold text-heading mb-4">Current & Historical User Activity</h2>
+            <div id="userActivityTable" class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead>
+                        <tr class="text-left text-xs font-semibold uppercase tracking-wider text-muted">
+                            <th class="px-6 py-3">User</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3">Total Logins</th>
+                            <th class="px-6 py-3">Resumes Processed</th>
+                            <th class="px-6 py-3">Last Seen</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-stats-body" class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tr><td colspan="5" class="text-center py-4 text-muted">Loading user data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-8 border-t border-gray-200 dark:border-gray-700 mt-16">
+    </footer>
+
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+    <script>
+        const API_URL = '/api/dashboard_data';
+        applyInitialTheme();
+        fetchDashboardData();
+
+        async function fetchDashboardData() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+
+                if (data.success) {
+                    renderKPIs(data);
+                    renderUserTable(data.user_stats);
+                    // Render the new Project Distribution Table
+                    renderProjectDistributionTable(data.project_stats); 
+                } else {
+                    document.getElementById('kpi-cards').innerHTML = '<p class="text-red-500">Error loading data: ' + data.error + '</p>';
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                document.getElementById('kpi-cards').innerHTML = '<p class="text-red-500">Network error. Failed to fetch dashboard data.</p>';
+            }
+        }
+
+        function renderKPIs(data) {
+            const totalUsers = data.user_stats.length;
+            const activeUsers = data.user_stats.filter(u => u.is_active).length;
+
+            const kpis = [
+                { title: "Total Resumes Processed", value: data.total_resumes_processed, icon: "fas fa-file-alt", color: "text-primary-orange" },
+                { title: "Active Recruitment Projects", value: data.total_projects, icon: "fas fa-folder-open", color: "text-blue-500" },
+                { title: "Active Users (Approx.)", value: activeUsers + " / " + totalUsers, icon: "fas fa-user-check", color: "text-green-500" },
+            ];
+
+            const kpiHtml = kpis.map(kpi => `
+                <div class="bg-card p-6 rounded-xl shadow-md border-l-4 border-primary-orange">
+                    <div class="flex items-center">
+                        <i class="${kpi.icon} ${kpi.color} text-3xl mr-4 opacity-75"></i>
+                        <div>
+                            <p class="text-sm font-medium text-muted">${kpi.title}</p>
+                            <p class="text-3xl font-bold text-heading">${kpi.value}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('kpi-cards').innerHTML = kpiHtml;
+        }
+
+        function renderUserTable(userStats) {
+            const tableBody = document.getElementById('user-stats-body');
+            tableBody.innerHTML = ''; // Clear loading message
+
+            userStats.sort((a, b) => b.is_active - a.is_active); // Sort active users first
+
+            userStats.forEach(user => {
+                const statusIcon = user.is_active 
+                    ? '<i class="fas fa-circle text-green-500 mr-2 text-xs"></i> Active' 
+                    : '<i class="fas fa-circle text-gray-400 mr-2 text-xs"></i> Offline';
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-heading">${user.username.toUpperCase()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold">${statusIcon}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-body">${user.logins}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-body">${user.resumes_processed}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-muted">${user.last_seen}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // ***************************************************************
+        // NEW FUNCTION: Render Project Distribution as a Table
+        // ***************************************************************
+        function renderProjectDistributionTable(projectStats) {
+            const tableBody = document.getElementById('project-stats-body');
+            tableBody.innerHTML = ''; // Clear loading message
+
+            if (projectStats.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">No active project data available.</td></tr>';
+                return;
+            }
+
+            // Sort by total resumes descending
+            projectStats.sort((a, b) => b.total_resumes - a.total_resumes);
+
+            projectStats.forEach(project => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-heading">${project.title}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-body text-right">${project.total_resumes}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-primary-orange font-semibold text-right">${project.top_kept}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        // ***************************************************************
+        
+    </script>
+</body>
+</html>

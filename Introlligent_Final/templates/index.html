@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/Y9pxcgTv/images-removebg-preview.png">
+    <title>Introlligent - AI-Powered Resume Evaluator</title>
+    <head>
+
+    <link rel="preload" as="image" href="{{ url_for('static', filename='introlligent-logo.webp') }}">
+    <link rel="preload" as="image" href="https://i.postimg.cc/jq349Dcj/feature.png">
+    <link rel="preload" as="image" href="{{ url_for('static', filename='feature.webp') }}">
+    </head>
+    <script>
+        (function() {
+            try {
+                const theme = localStorage.getItem('theme') || 'light-theme';
+                document.documentElement.classList.add(theme);
+            } catch (e) {}
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"></script>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-styles.css') }}">
+</head>
+<body class="p-4 md:px-8 md:py-4">
+    <div id="app" data-user-role="{{ user_role }}"></div>
+    <div id="modal-container"></div>
+    <div class="chat-container" id="chat-widget">
+    <div class="chat-button" onclick="window.chatWidget.toggle()">
+        <i class="fas fa-comment-dots"></i>
+    </div>
+        <div id="chat-popup" class="chat-popup">
+            <div class="chat-header">
+                <h3 class="font-bold text-xl">Introlligent Assistant</h3>
+                <button onclick="window.chatWidget.toggle()" class="text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="chat-body" class="chat-body">
+                <div class="message assistant-message">Hi there! I can help you create job descriptions and answer questions about the Introlligent tool.</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chat-input-field" placeholder="How can I help you?">
+                <button onclick="window.chatWidget.sendMessage()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='enhanced-scripts.js') }}"></script>
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>
